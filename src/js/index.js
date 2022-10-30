@@ -1,13 +1,18 @@
-import axios from 'axios';
+import { galleryMarkup } from './galleryMarkup';
+import { getImages } from './getImages';
 import SimpleLightbox from 'simplelightbox';
+
+import Notiflix from 'notiflix';
+import 'notiflix/dist/notiflix-3.2.5.min.css';
 
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const BASE_URL = 'https://pixabay.com/api/';
-const KEY = '30924937-b89bb4702c2359d017495e0f8';
-
+const FAILURE_MESSAGE =
+  'Sorry, there are no images matching your search query. Please try again.';
 let page = 1;
-const perPage = 40;
+let totalHits = 0;
+let lightBox;
+let searchImagesEncoded;
 
 const refs = {
   form: document.querySelector('#search-form'),
@@ -19,18 +24,25 @@ const refs = {
 
 refs.searchBtn.addEventListener('click', onSearchImages);
 refs.loadMoreBtn.addEventListener('click', onLoadMore);
+refs.galleryBox.addEventListener('click', onImgClick);
 
 function onSearchImages(event) {
   event.preventDefault();
   clearGallery();
+  hideLoadMore();
 
+  page = 1;
+  searchImagesEncoded = '';
   const searchImages = refs.input.value.trim();
+  if (searchImages === '') {
+    Notiflix.Notify.failure(FAILURE_MESSAGE);
+    return;
+  }
   searchImagesEncoded = searchImages.replace(' ', '+');
-  renderGallery(searchImagesEncoded, page);
-  refs.galleryBox.addEventListener('click', onImgClick);
+  newSearchImages(searchImagesEncoded, page);
 }
 
-function onLoadMore(event) {
+function onLoadMore() {
   page += 1;
   renderGallery(searchImagesEncoded, page);
 }
@@ -39,64 +51,26 @@ function onImgClick(event) {
   event.preventDefault();
 }
 
-async function getImages(searchImagesEncoded, page) {
+async function renderGallery(searchImagesEncoded, page) {
   try {
-    const response = await axios.get(
-      `${BASE_URL}?key=${KEY}&q=${searchImagesEncoded}&page=${page}&per_page=${perPage}&image_type=photo&orientation=horizontal&safesearch=true`
-    );
-    const imagesInfo = response.data;
-
-    return imagesInfo;
+    const imagesInfo = await getImages(searchImagesEncoded, page);
+    totalHits = imagesInfo.totalHits;
+    if (totalHits === 0) {
+      Notiflix.Notify.failure(FAILURE_MESSAGE);
+      return;
+    }
+    addGalleryMarkup(imagesInfo);
+    activeLoadMore();
+    lightBox = new SimpleLightbox('.photo-card a', { captionDelay: 250 });
+    lightBox.refresh();
   } catch (error) {
-    console.log('Error:', error);
+    hideLoadMore();
   }
 }
 
-async function renderGallery(searchImagesEncoded, page) {
-  const imagesInfo = await getImages(searchImagesEncoded, page);
-  addGalleryMarkup(imagesInfo);
-  activeLoadMore();
-  const lightBox = new SimpleLightbox('.photo-card a', { captionDelay: 250 });
-}
-
-function galleryMarkup({ hits: images }) {
-  return images
-    .map(
-      ({
-        webformatURL,
-        largeImageURL,
-        tags,
-        likes,
-        views,
-        comments,
-        downloads,
-      }) => {
-        return `<div class="photo-card">
-                    <a href="${largeImageURL}">
-                        <img class="searchImage" src="${webformatURL}" alt="${tags}" loading="lazy" />
-                    </a>
-                    <div class="info">
-                    <p class="info-item">
-                        <b>Likes</b>
-                        ${likes}
-                    </p>
-                    <p class="info-item">
-                        <b>Views</b>
-                        ${views}
-                    </p>
-                    <p class="info-item">
-                        <b>Comments</b>
-                        ${comments}
-                    </p>
-                    <p class="info-item">
-                        <b>Downloads</b>
-                        ${downloads}
-                    </p>
-                </div>
-            </div>`;
-      }
-    )
-    .join('');
+async function newSearchImages(searchImagesEncoded, page) {
+  const searchImages = await renderGallery(searchImagesEncoded, page);
+  Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
 }
 
 function addGalleryMarkup(imagesInfo) {
@@ -109,4 +83,11 @@ function clearGallery() {
 
 function activeLoadMore() {
   refs.loadMoreBtn.classList.remove('is-hidden');
+}
+
+function hideLoadMore() {
+  if (!refs.loadMoreBtn.classList.contains('is-hidden')) {
+    refs.loadMoreBtn.classList.add('is-hidden');
+  }
+  return;
 }
