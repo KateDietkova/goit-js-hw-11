@@ -1,14 +1,20 @@
 import { galleryMarkup } from './galleryMarkup';
-import { getImages } from './getImages';
+import {
+  getImages,
+  BASE_URL,
+  KEY,
+  INFO_MESSAGE,
+  perPage,
+  FAILURE_MESSAGE,
+} from './getImages';
+import { smoothScroll } from './smoothScrolling';
 import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
+import InfiniteScroll from 'infinite-scroll';
 
 import Notiflix from 'notiflix';
 import 'notiflix/dist/notiflix-3.2.5.min.css';
 
-import 'simplelightbox/dist/simple-lightbox.min.css';
-
-const FAILURE_MESSAGE =
-  'Sorry, there are no images matching your search query. Please try again.';
 let page = 1;
 let totalHits = 0;
 let lightBox;
@@ -31,6 +37,7 @@ function onSearchImages(event) {
   clearGallery();
   hideLoadMore();
 
+  totalHits = 0;
   page = 1;
   searchImagesEncoded = '';
   const searchImages = refs.input.value.trim();
@@ -42,9 +49,10 @@ function onSearchImages(event) {
   newSearchImages(searchImagesEncoded, page);
 }
 
-function onLoadMore() {
+async function onLoadMore() {
   page += 1;
-  renderGallery(searchImagesEncoded, page);
+  await renderGallery(searchImagesEncoded, page);
+  smoothScroll();
 }
 
 function onImgClick(event) {
@@ -70,6 +78,9 @@ async function renderGallery(searchImagesEncoded, page) {
 
 async function newSearchImages(searchImagesEncoded, page) {
   const searchImages = await renderGallery(searchImagesEncoded, page);
+  if (totalHits === 0) {
+    return;
+  }
   Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
 }
 
