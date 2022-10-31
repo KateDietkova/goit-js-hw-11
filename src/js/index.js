@@ -1,10 +1,6 @@
 import { galleryMarkup } from './galleryMarkup';
 import {
   getImages,
-  BASE_URL,
-  KEY,
-  INFO_MESSAGE,
-  perPage,
   FAILURE_MESSAGE,
 } from './getImages';
 import { smoothScroll } from './smoothScrolling';
