@@ -26,7 +26,6 @@ const refs = {
 
 refs.searchBtn.addEventListener('click', onSearchImages);
 refs.loadMoreBtn.addEventListener('click', onLoadMore);
-refs.galleryBox.addEventListener('click', onImgClick);
 
 function onSearchImages(event) {
   event.preventDefault();
@@ -49,10 +48,6 @@ async function onLoadMore() {
   page += 1;
   await renderGallery(searchImagesEncoded, page);
   smoothScroll();
-}
-
-function onImgClick(event) {
-  event.preventDefault();
 }
 
 async function renderGallery(searchImagesEncoded, page) {
