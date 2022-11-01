@@ -1,8 +1,5 @@
 import { galleryMarkup } from './galleryMarkup';
-import {
-  getImages,
-  FAILURE_MESSAGE,
-} from './getImages';
+import { getImages, FAILURE_MESSAGE } from './getImages';
 import { smoothScroll } from './smoothScrolling';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
@@ -46,8 +43,10 @@ function onSearchImages(event) {
 
 async function onLoadMore() {
   page += 1;
+  hideLoadMore();
   await renderGallery(searchImagesEncoded, page);
   smoothScroll();
+  activeLoadMore();
 }
 
 async function renderGallery(searchImagesEncoded, page) {
