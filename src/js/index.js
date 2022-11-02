@@ -58,7 +58,6 @@ async function renderGallery(searchImagesEncoded, page) {
       return;
     }
     addGalleryMarkup(imagesInfo);
-    activeLoadMore();
     lightBox = new SimpleLightbox('.photo-card a', { captionDelay: 250 });
     lightBox.refresh();
   } catch (error) {
@@ -71,6 +70,7 @@ async function newSearchImages(searchImagesEncoded, page) {
   if (totalHits === 0) {
     return;
   }
+  activeLoadMore();
   Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
 }
 
